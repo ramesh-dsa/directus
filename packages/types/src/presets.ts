@@ -1,4 +1,5 @@
 import type { Filter } from './filter.js';
+import type { SearchInput } from './query.js';
 
 export type Preset = {
 	id?: number;
@@ -8,7 +9,7 @@ export type Preset = {
 	user: string | null;
 	role: string | null;
 	collection: string;
-	search: string | null;
+	search: string | SearchInput | null;
 	filter: Filter | null;
 	layout: string | null;
 	layout_query: { [layout: string]: any } | null;

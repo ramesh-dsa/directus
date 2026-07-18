@@ -1,5 +1,12 @@
 import type { Filter } from './filter.js';
 
+export type SearchInput = {
+	query: string;
+	fields?: string[];
+	mode?: 'contains' | 'exact' | 'starts_with' | 'ends_with' | 'fulltext' | 'fuzzy';
+	operator?: 'and' | 'or';
+};
+
 export type Query = {
 	fields?: string[] | null;
 	sort?: string[] | null;
@@ -7,7 +14,7 @@ export type Query = {
 	limit?: number | null;
 	offset?: number | null;
 	page?: number | null;
-	search?: string | null;
+	search?: string | SearchInput | null;
 	version?: string | null;
 	versionRaw?: boolean | null;
 	export?: 'json' | 'csv' | 'csv_utf8' | 'xml' | 'yaml' | null;
@@ -26,7 +33,7 @@ export type DeepQuery = {
 	_limit?: number | null;
 	_offset?: number | null;
 	_page?: number | null;
-	_search?: string | null;
+	_search?: string | SearchInput | null;
 	_group?: string[] | null;
 	_aggregate?: Aggregate | null;
 };

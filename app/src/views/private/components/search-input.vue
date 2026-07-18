@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Filter } from '@directus/types';
+import type { Filter, SearchInput } from '@directus/types';
 import { isObject } from 'lodash';
 import { computed, onMounted, ref } from 'vue';
 import TransitionExpand from '@/components/transition/expand.vue';
@@ -9,12 +9,12 @@ import InterfaceSystemFilter from '@/interfaces/_system/system-filter/system-fil
 
 const props = withDefaults(
 	defineProps<{
-		modelValue: string | null;
+		modelValue: string | SearchInput | null;
 		disabled?: boolean;
 		showFilter?: boolean;
 		expanded?: boolean;
 		collection?: string;
-		filter?: Filter | null;
+		filter?: Filter;
 		autofocus?: boolean;
 		placeholder?: string;
 	}>(),
@@ -25,7 +25,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-	(e: 'update:modelValue', value: string | null): void;
+	(e: 'update:modelValue', value: string | SearchInput | null): void;
 	(e: 'update:filter', value: Filter | null): void;
 }>();
 
@@ -33,11 +33,48 @@ const input = ref<HTMLInputElement | null>(null);
 
 const active = ref(props.autofocus);
 const filterActive = ref(false);
+const advancedActive = ref(false);
 const filterBorder = ref(false);
+
+const searchText = ref(getSearchQuery());
 
 onMounted(() => {
 	if (active.value) input.value?.focus();
 });
+
+function getSearchQuery(): string {
+	if (!props.modelValue) return '';
+	if (typeof props.modelValue === 'string') return props.modelValue;
+	return props.modelValue.query ?? '';
+}
+
+function getSearchMode(): SearchInput['mode'] {
+	if (!props.modelValue || typeof props.modelValue === 'string') return undefined;
+	return props.modelValue.mode;
+}
+
+function getSearchOperator(): SearchInput['operator'] {
+	if (!props.modelValue || typeof props.modelValue === 'string') return undefined;
+	return props.modelValue.operator;
+}
+
+function getSearchFields(): string[] {
+	if (!props.modelValue || typeof props.modelValue === 'string') return [];
+	return props.modelValue.fields ?? [];
+}
+
+const mode = ref<SearchInput['mode']>(getSearchMode());
+const searchOperator = ref<SearchInput['operator']>(getSearchOperator());
+const searchFields = ref<string[]>(getSearchFields());
+
+const searchModes = [
+	{ value: undefined, text: 'Contains' },
+	{ value: 'exact', text: 'Exact' },
+	{ value: 'starts_with', text: 'Starts with' },
+	{ value: 'ends_with', text: 'Ends with' },
+	{ value: 'fulltext', text: 'Full-text' },
+	{ value: 'fuzzy', text: 'Fuzzy' },
+] as const;
 
 const activeFilterCount = computed(() => {
 	if (!props.filter) return 0;
@@ -84,7 +121,13 @@ function toggleFilter() {
 	if (!filterActive.value) input.value?.focus();
 }
 
+function toggleAdvanced() {
+	advancedActive.value = !advancedActive.value;
+	active.value = true;
+}
+
 function clear() {
+	searchText.value = '';
 	emit('update:modelValue', null);
 	if (active.value) input.value?.focus();
 }
@@ -92,11 +135,11 @@ function clear() {
 function disable() {
 	active.value = false;
 	filterActive.value = false;
+	advancedActive.value = false;
 	input.value?.blur();
 }
 
 function onFocusOut(event: FocusEvent) {
-	// Check if focus is moving to another element inside the search component -- prevents race condition on touch vs click events
 	const searchElement = (event.currentTarget as HTMLElement)?.closest('.search-input');
 	const relatedTarget = event.relatedTarget as HTMLElement | null;
 
@@ -112,7 +155,26 @@ function onFocusOut(event: FocusEvent) {
 function emitValue() {
 	if (!input.value) return;
 	const value = input.value.value.trim();
-	emit('update:modelValue', value || null);
+	if (!value) {
+		emit('update:modelValue', null);
+		return;
+	}
+	const hasAdvanced = mode.value || searchOperator.value || searchFields.value.length > 0;
+	if (hasAdvanced) {
+		emit('update:modelValue', {
+			query: value,
+			...(mode.value ? { mode: mode.value } : {}),
+			...(searchOperator.value ? { operator: searchOperator.value } : {}),
+			...(searchFields.value.length > 0 ? { fields: searchFields.value } : {}),
+		} as SearchInput);
+	} else {
+		emit('update:modelValue', value);
+	}
+}
+
+function setSearchMode(newMode: SearchInput['mode']) {
+	mode.value = mode.value === newMode ? undefined : newMode;
+	emitValue();
 }
 </script>
 
@@ -130,9 +192,11 @@ function emitValue() {
 				expanded,
 				disabled,
 				'filter-active': filterActive,
+				'advanced-active': advancedActive,
 				'has-content': !!modelValue,
 				'filter-border': filterBorder,
 				'show-filter': showFilter,
+				'has-advanced': mode || searchOperator === 'and',
 			}"
 			role="search"
 			@click="activate"
@@ -143,7 +207,7 @@ function emitValue() {
 			<input
 				ref="input"
 				class="search-input-field"
-				:value="modelValue"
+				:value="searchText"
 				:placeholder="placeholder ?? $t('search_items')"
 				type="search"
 				spellcheck="false"
@@ -152,7 +216,10 @@ function emitValue() {
 				autocomplete="off"
 				:tabindex="!active && !modelValue ? -1 : undefined"
 				:disabled
-				@input="emitValue"
+				@input="
+					searchText = ($event.target as HTMLInputElement).value;
+					emitValue();
+				"
 				@paste="emitValue"
 				@keydown.esc="disable"
 				@focusin="activate"
@@ -168,6 +235,16 @@ function emitValue() {
 				name="close"
 				:disabled
 				@click.stop="clear"
+			/>
+
+			<VIcon
+				v-tooltip.bottom="'Advanced search'"
+				clickable
+				class="icon-settings"
+				:class="{ active: advancedActive || mode || searchOperator === 'and' }"
+				name="tune"
+				:disabled
+				@click.stop="toggleAdvanced"
 			/>
 
 			<template v-if="showFilter">
@@ -200,6 +277,44 @@ function emitValue() {
 					</div>
 				</TransitionExpand>
 			</template>
+
+			<TransitionExpand @before-enter="filterBorder = true" @after-leave="filterBorder = false">
+				<div v-show="advancedActive" class="advanced-search" :class="{ active }">
+					<div class="advanced-section">
+						<span class="advanced-label">Mode</span>
+						<div class="mode-chips">
+							<button
+								v-for="m in searchModes"
+								:key="m.value ?? 'default'"
+								class="chip"
+								:class="{ selected: mode === m.value }"
+								@click="setSearchMode(m.value)"
+							>
+								{{ m.text }}
+							</button>
+						</div>
+					</div>
+					<div class="advanced-section">
+						<span class="advanced-label">Match</span>
+						<div class="operator-toggle">
+							<button
+								class="chip"
+								:class="{ selected: !searchOperator || searchOperator === 'or' }"
+								@click="searchOperator = 'or'; emitValue()"
+							>
+								Any (OR)
+							</button>
+							<button
+								class="chip"
+								:class="{ selected: searchOperator === 'and' }"
+								@click="searchOperator = 'and'; emitValue()"
+							>
+								All (AND)
+							</button>
+						</div>
+					</div>
+				</div>
+			</TransitionExpand>
 		</div>
 	</div>
 </template>
@@ -207,7 +322,6 @@ function emitValue() {
 <style lang="scss" scoped>
 @use '@/styles/mixins';
 
-/* Lets .search-input expand when filter is active (.filter-active) without stretching the parent flex layout */
 .search-input-wrapper {
 	display: flex;
 	flex: 1 1 var(--form-column-width);
@@ -221,7 +335,7 @@ function emitValue() {
 	--search-input-radius: var(--theme--border-radius);
 	--search-input-filter-active-width: 25rem;
 	--icon-size: var(--icon-size-default);
-	--icon-search-padding-left: 0.375rem; // visually center in closed filter
+	--icon-search-padding-left: 0.375rem;
 	--icon-search-padding-right: 0.25rem;
 	--icon-filter-margin-right: 0.4375rem;
 
@@ -229,6 +343,7 @@ function emitValue() {
 	box-sizing: content-box;
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	inline-size: var(--search-input-size);
 	min-block-size: var(--search-input-size);
 	border: var(--search-input-border-width) solid transparent;
@@ -240,15 +355,12 @@ function emitValue() {
 		border-end-end-radius var(--fast) var(--transition);
 
 	&.show-filter {
-		/* stylelint-disable scss/operator-no-newline-after */
 		inline-size: calc(
-			var(--icon-size) * 2 + var(--icon-search-padding-left) + var(--icon-search-padding-right) +
+			var(--icon-size) * 3 + var(--icon-search-padding-left) + var(--icon-search-padding-right) +
 				var(--icon-filter-margin-right)
 		);
-		/* stylelint-enable scss/operator-no-newline-after */
 	}
 
-	/* Show focus ring only when the text input is focused */
 	&:has(.search-input-field:focus-visible) {
 		outline: var(--focus-ring-width) solid var(--theme--primary);
 		outline-offset: var(--focus-ring-offset-invert);
@@ -300,9 +412,18 @@ function emitValue() {
 		--v-icon-color-hover: var(--theme--foreground-accent);
 	}
 
+	.icon-settings {
+		--v-icon-color-hover: var(--theme--foreground-accent);
+
+		&.active {
+			--v-icon-color: var(--theme--primary);
+		}
+	}
+
 	&.disabled {
 		.icon-search,
-		.icon-filter {
+		.icon-filter,
+		.icon-settings {
 			--v-icon-color: var(--theme--foreground-subdued);
 		}
 	}
@@ -362,7 +483,8 @@ function emitValue() {
 		}
 	}
 
-	&.filter-active {
+	&.filter-active,
+	&.advanced-active {
 		min-inline-size: var(--form-column-min-width);
 		z-index: 10;
 
@@ -398,7 +520,8 @@ function emitValue() {
 	}
 }
 
-.filter {
+.filter,
+.advanced-search {
 	position: absolute;
 	inset-block-start: 100%;
 	inset-inline-start: calc(-1 * var(--search-input-border-width));
@@ -423,8 +546,56 @@ function emitValue() {
 	}
 
 	.filter-input {
-		/* Use margin instead of padding to make sure transition expand takes it into account */
 		margin: 0.5625rem 0.4375rem;
+	}
+}
+
+.advanced-search {
+	padding: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.advanced-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+
+.advanced-label {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--theme--foreground-subdued);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.mode-chips,
+.operator-toggle {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+
+.chip {
+	padding: 0.25rem 0.5rem;
+	font-size: 0.8125rem;
+	color: var(--theme--foreground);
+	background: var(--theme--background);
+	border: var(--theme--border-width) solid var(--theme--border-color);
+	border-radius: var(--theme--border-radius);
+	cursor: pointer;
+	transition: all var(--fast) var(--transition);
+
+	&:hover {
+		border-color: var(--theme--primary);
+	}
+
+	&.selected {
+		color: var(--theme--primary);
+		background: var(--theme--primary-background);
+		border-color: var(--theme--primary);
 	}
 }
 

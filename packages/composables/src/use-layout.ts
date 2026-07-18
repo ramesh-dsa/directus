@@ -1,4 +1,4 @@
-import type { Filter, LayoutConfig, ShowSelect } from '@directus/types';
+import type { Filter, LayoutConfig, SearchInput, ShowSelect } from '@directus/types';
 import type { Component, ComputedRef, PropType, Ref } from 'vue';
 import { computed, defineComponent, reactive, toRefs } from 'vue';
 import { useExtensions } from './use-system.js';
@@ -100,7 +100,7 @@ export function createLayoutWrapper<Options, Query>(layout: LayoutConfig): Compo
 				default: null,
 			},
 			search: {
-				type: String as PropType<string | null>,
+				type: [String, Object] as PropType<string | SearchInput | null>,
 				default: null,
 			},
 			showSelect: {

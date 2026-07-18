@@ -1,6 +1,6 @@
 import { useEnv } from '@directus/env';
 import { InvalidQueryError } from '@directus/errors';
-import type { Accountability, Aggregate, Query, SchemaOverview } from '@directus/types';
+import type { Accountability, Aggregate, Query, SchemaOverview, SearchInput } from '@directus/types';
 import { parseFilter, parseJSON } from '@directus/utils';
 import { flatten, get, isPlainObject, merge, set } from 'lodash-es';
 import getDatabase from '../database/index.js';
@@ -73,10 +73,29 @@ export async function sanitizeQuery(
 		(query as any).meta = sanitizeMeta(rawQuery['meta']);
 	}
 
-	if (rawQuery['search'] && typeof rawQuery['search'] === 'string') {
-		const trimmed = rawQuery['search'].trim();
-		if (trimmed) query.search = trimmed;
-		else query.search = rawQuery['search'];
+	if (rawQuery['search']) {
+		if (typeof rawQuery['search'] === 'string') {
+			const trimmed = rawQuery['search'].trim();
+			if (trimmed) query.search = trimmed;
+			else query.search = rawQuery['search'];
+		} else if (typeof rawQuery['search'] === 'object' && !Array.isArray(rawQuery['search'])) {
+			const s = rawQuery['search'] as Record<string, any>;
+			if (s['query'] && typeof s['query'] === 'string') {
+				const modeVal = s['mode'];
+				const operatorVal = s['operator'];
+
+				query.search = {
+					query: s['query'].trim(),
+					...(Array.isArray(s['fields']) && { fields: s['fields'].filter((f: any) => typeof f === 'string') }),
+					...(typeof modeVal === 'string' &&
+						['contains', 'exact', 'starts_with', 'ends_with', 'fulltext', 'fuzzy'].includes(modeVal) && {
+							mode: modeVal,
+						}),
+					...(typeof operatorVal === 'string' &&
+						['and', 'or'].includes(operatorVal) && { operator: operatorVal }),
+				} as SearchInput;
+			}
+		}
 	}
 
 	if (rawQuery['version']) {

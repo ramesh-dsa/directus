@@ -27,7 +27,12 @@ const querySchema = Joi.object({
 	offset: Joi.number().integer().min(0),
 	page: Joi.number().integer().min(0),
 	meta: Joi.array().items(Joi.string().valid('total_count', 'filter_count')),
-	search: Joi.string(),
+	search: Joi.alternatives(Joi.string(), Joi.object({
+		query: Joi.string().required(),
+		fields: Joi.array().items(Joi.string()),
+		mode: Joi.string().valid('contains', 'exact', 'starts_with', 'ends_with', 'fulltext', 'fuzzy'),
+		operator: Joi.string().valid('and', 'or'),
+	})),
 	export: Joi.string().valid('csv', 'csv_utf8', 'json', 'xml', 'yaml'),
 	version: Joi.string(),
 	versionRaw: Joi.boolean(),

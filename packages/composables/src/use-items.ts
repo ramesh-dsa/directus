@@ -113,7 +113,7 @@ export function useItems(collection: Ref<string | null>, query: ComputedQuery): 
 		},
 		{
 			getKey(url, filter, search) {
-				const key: { url: string; filter?: Filter; search?: string } = { url };
+				const key: { url: string; filter?: Filter; search?: Query['search'] } = { url };
 
 				if (!isEmpty(filter)) key.filter = filter;
 				if (!isEmpty(search)) key.search = search!;

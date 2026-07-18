@@ -1,4 +1,4 @@
-import type { User } from '@directus/types';
+import type { SearchInput, User } from '@directus/types';
 import { Filter, Preset } from '@directus/types';
 import { assign, cloneDeep, debounce, isEqual } from 'lodash';
 import { computed, ComputedRef, ref, Ref, watch } from 'vue';
@@ -12,7 +12,7 @@ type UsablePreset = {
 	layoutOptions: Ref<Record<string, any>>;
 	layoutQuery: Ref<Record<string, any>>;
 	filter: Ref<Filter | null>;
-	search: Ref<string | null>;
+	search: Ref<string | SearchInput | null>;
 	refreshInterval: Ref<number | null>;
 	savePreset: (preset?: Partial<Preset> | undefined) => Promise<any>;
 	saveCurrentAsBookmark: (overrides: Partial<Preset>) => Promise<any>;
@@ -145,7 +145,7 @@ export function usePreset(
 		set: (refresh_interval) => updatePreset({ refresh_interval }),
 	});
 
-	const search = computed<string | null>({
+	const search = computed<string | SearchInput | null>({
 		get: () => localPreset.value.search || null,
 		set: (search) => updatePreset({ search }),
 	});

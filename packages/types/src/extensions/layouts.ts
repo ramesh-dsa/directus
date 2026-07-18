@@ -1,5 +1,6 @@
 import type { Component } from 'vue';
 import type { Filter } from '../filter.js';
+import type { SearchInput } from '../query.js';
 
 export interface LayoutConfig<Options = any, Query = any> {
 	id: string;
@@ -24,7 +25,7 @@ export interface LayoutProps<Options = any, Query = any> {
 	filterUser: Filter | null;
 	filterSystem: Filter | null;
 	filter: Filter | null;
-	search: string | null;
+	search: string | SearchInput | null;
 	selectMode: boolean;
 	showSelect: ShowSelect;
 	readonly: boolean;
