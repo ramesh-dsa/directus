@@ -7,6 +7,7 @@ import * as fnHelpers from './fn/index.js';
 import * as geometryHelpers from './geometry/index.js';
 import * as numberHelpers from './number/index.js';
 import * as schemaHelpers from './schema/index.js';
+import * as searchHelpers from './search/index.js';
 import * as sequenceHelpers from './sequence/index.js';
 
 export function getHelpers(database: Knex) {
@@ -16,6 +17,7 @@ export function getHelpers(database: Knex) {
 		date: new dateHelpers[client](database),
 		st: new geometryHelpers[client](database),
 		schema: new schemaHelpers[client](database),
+		search: new searchHelpers[client](database),
 		sequence: new sequenceHelpers[client](database),
 		number: new numberHelpers[client](database),
 		capabilities: new capabilitiesHelpers[client](database),

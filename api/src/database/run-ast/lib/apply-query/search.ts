@@ -18,7 +18,7 @@ export function applySearch(
 	aliasMap: AliasMap,
 	permissions: Permission[],
 ) {
-	const { number: numberHelper } = getHelpers(knex);
+	const { number: numberHelper, search: searchHelper } = getHelpers(knex);
 
 	const allowedFields = new Set(permissions.filter((p) => p.collection === collection).flatMap((p) => p.fields ?? []));
 
@@ -76,7 +76,7 @@ export function applySearch(
 		}
 
 		if (fieldType === 'string') {
-			queryBuilder[logical].whereRaw(`LOWER(??) LIKE ?`, [`${collection}.${name}`, `%${searchQuery.toLowerCase()}%`]);
+			searchHelper.addSearchCondition(queryBuilder, collection, name, searchQuery, logical);
 		} else if (fieldType === 'numeric') {
 			numberHelper.addSearchCondition(queryBuilder, collection, name, parseNumericString(searchQuery)!, logical);
 		} else if (fieldType === 'uuid') {
