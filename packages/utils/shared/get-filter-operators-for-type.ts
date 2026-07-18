@@ -8,8 +8,6 @@ export function getFilterOperatorsForType(
 	type: Type,
 	opts?: GetFilterOperationsForTypeOptions,
 ): ClientFilterOperator[] {
-	const validationOnlyStringFilterOperators: ClientFilterOperator[] = opts?.includeValidation ? ['regex'] : [];
-
 	switch (type) {
 		// Text
 		case 'binary':
@@ -36,7 +34,7 @@ export function getFilterOperatorsForType(
 				'nnull',
 				'in',
 				'nin',
-				...validationOnlyStringFilterOperators,
+				'regex',
 			];
 
 		case 'hash':
@@ -85,7 +83,7 @@ export function getFilterOperatorsForType(
 				'nnull',
 				'in',
 				'nin',
-				...validationOnlyStringFilterOperators,
+				'regex',
 			];
 	}
 }

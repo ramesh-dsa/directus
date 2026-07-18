@@ -94,23 +94,24 @@ function validateFilter(filter: Filter) {
 				case '_some':
 					validateFilter(nested);
 					break;
-				case '_eq':
-				case '_neq':
-				case '_contains':
-				case '_ncontains':
-				case '_starts_with':
-				case '_nstarts_with':
-				case '_istarts_with':
-				case '_nistarts_with':
-				case '_ends_with':
-				case '_nends_with':
-				case '_iends_with':
-				case '_niends_with':
-				case '_gt':
-				case '_gte':
-				case '_lt':
-				case '_lte':
-				default:
+			case '_eq':
+			case '_neq':
+			case '_contains':
+			case '_ncontains':
+			case '_starts_with':
+			case '_nstarts_with':
+			case '_istarts_with':
+			case '_nistarts_with':
+			case '_ends_with':
+			case '_nends_with':
+			case '_iends_with':
+			case '_niends_with':
+			case '_gt':
+			case '_gte':
+			case '_lt':
+			case '_lte':
+			case '_regex':
+			default:
 					validateFilterPrimitive(value, key);
 					break;
 			}

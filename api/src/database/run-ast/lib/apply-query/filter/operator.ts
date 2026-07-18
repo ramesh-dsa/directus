@@ -5,6 +5,8 @@ import type { Knex } from 'knex';
 import { parseJsonPath } from '../../../../helpers/fn/json/parse-function.js';
 import type { Helpers } from '../../../../helpers/index.js';
 import { getFunctions, getHelpers } from '../../../../helpers/index.js';
+import { getDatabaseClient } from '../../../../index.js';
+import type { DatabaseClient } from '../../../../index.js';
 import { getColumn } from '../../../utils/get-column.js';
 import { getOperation } from '../get-operation.js';
 
@@ -392,5 +394,17 @@ function applyOperatorToRaw(
 
 	if (operator == '_nintersects_bbox') {
 		dbQuery[logical].whereRaw(helpers.st.nintersects_bbox(key!, compareValue));
+	}
+
+	if (operator == '_regex') {
+		const client = getDatabaseClient((helpers as any).date.knex);
+
+		if (client === 'postgres' || client === 'cockroachdb') {
+			dbQuery[logical].whereRaw('CAST(?? AS TEXT) ~ ?', [key!, compareValue]);
+		} else if (client === 'mysql' || client === 'mariadb') {
+			dbQuery[logical].whereRaw('CAST(?? AS CHAR) REGEXP ?', [key!, compareValue]);
+		} else {
+			dbQuery[logical].whereRaw('LOWER(??) LIKE ?', [key!, `%${String(compareValue).toLowerCase()}%`]);
+		}
 	}
 }

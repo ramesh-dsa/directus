@@ -19,7 +19,8 @@ export type FilterOperator =
 	| 'intersects'
 	| 'nintersects'
 	| 'intersects_bbox'
-	| 'nintersects_bbox';
+	| 'nintersects_bbox'
+	| 'regex';
 
 export type ClientFilterOperator =
 	| FilterOperator
@@ -75,6 +76,7 @@ export type FieldFilterOperator = {
 	_intersects_bbox?: string;
 	_nintersects_bbox?: string;
 	_json?: Record<string, FieldFilterOperator>;
+	_regex?: string;
 };
 
 export type FieldValidationOperator = {
