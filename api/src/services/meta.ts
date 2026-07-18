@@ -1,6 +1,7 @@
 import type { AbstractServiceOptions, Accountability, Permission, Query, SchemaOverview } from '@directus/types';
 import type { Knex } from 'knex';
 import { isArray } from 'lodash-es';
+import { useEnv } from '@directus/env';
 import getDatabase from '../database/index.js';
 import applyQuery from '../database/run-ast/lib/apply-query/index.js';
 import { fetchPermissions } from '../permissions/lib/fetch-permissions.js';
@@ -26,6 +27,7 @@ export class MetaService {
 			query.meta.map((metaVal: string) => {
 				if (metaVal === 'total_count') return this.totalCount(collection);
 				if (metaVal === 'filter_count') return this.filterCount(collection, query);
+				if (metaVal === 'pagination') return this.pagination(collection, query);
 				return undefined;
 			}),
 		);
@@ -36,6 +38,22 @@ export class MetaService {
 				[query.meta![index]]: value,
 			};
 		}, {});
+	}
+
+	async pagination(collection: string, query: Query): Promise<Record<string, any>> {
+		const env = useEnv();
+		const total_count = await this.totalCount(collection);
+		const limit = query.limit ?? Number(env['QUERY_LIMIT_DEFAULT']);
+		const page = query.page ?? (query.offset ? Math.floor(query.offset / limit) + 1 : 1);
+		const pages = limit > 0 ? Math.ceil(total_count / limit) : 1;
+
+		return {
+			page,
+			pages,
+			per_page: limit,
+			has_next: page < pages,
+			has_previous: page > 1,
+		};
 	}
 
 	async totalCount(collection: string): Promise<number> {

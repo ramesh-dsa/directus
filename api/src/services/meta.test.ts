@@ -30,6 +30,10 @@ vi.mock('../permissions/modules/validate-access/validate-access.js', () => ({
 	validateAccess: vi.fn(),
 }));
 
+vi.mock('@directus/env', () => ({
+	useEnv: vi.fn().mockReturnValue({ QUERY_LIMIT_DEFAULT: 100 }),
+}));
+
 describe('MetaService', () => {
 	let db: MockedFunction<knex.Knex<any, unknown[]>>;
 
@@ -124,6 +128,58 @@ describe('MetaService', () => {
 			expect(result).toEqual({
 				total_count: 100,
 				unknown_meta: undefined,
+			});
+		});
+
+		test('should handle pagination meta value with page and limit', async () => {
+			vi.spyOn(service, 'totalCount').mockResolvedValue(50);
+
+			const query = { meta: ['pagination'], page: 2, limit: 10 };
+			const result = await service.getMetaForQuery('test_collection', query);
+
+			expect(service.totalCount).toHaveBeenCalledWith('test_collection');
+			expect(result).toEqual({
+				pagination: {
+					page: 2,
+					pages: 5,
+					per_page: 10,
+					has_next: true,
+					has_previous: true,
+				},
+			});
+		});
+
+		test('should handle pagination on last page', async () => {
+			vi.spyOn(service, 'totalCount').mockResolvedValue(30);
+
+			const query = { meta: ['pagination'], page: 3, limit: 10 };
+			const result = await service.getMetaForQuery('test_collection', query);
+
+			expect(result).toEqual({
+				pagination: {
+					page: 3,
+					pages: 3,
+					per_page: 10,
+					has_next: false,
+					has_previous: true,
+				},
+			});
+		});
+
+		test('should handle pagination on first page with default limit', async () => {
+			vi.spyOn(service, 'totalCount').mockResolvedValue(55);
+
+			const query = { meta: ['pagination'], page: 1 };
+			const result = await service.getMetaForQuery('test_collection', query);
+
+			expect(result).toEqual({
+				pagination: {
+					page: 1,
+					pages: 1,
+					per_page: 100,
+					has_next: false,
+					has_previous: false,
+				},
 			});
 		});
 	});
