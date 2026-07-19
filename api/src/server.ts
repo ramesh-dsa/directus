@@ -109,18 +109,20 @@ export async function createServer(): Promise<http.Server> {
 		startWebSocketHandlers();
 	}
 
-	const terminusOptions: TerminusOptions = {
-		timeout:
-			(env['SERVER_SHUTDOWN_TIMEOUT'] as number) >= 0 && (env['SERVER_SHUTDOWN_TIMEOUT'] as number) < Infinity
-				? (env['SERVER_SHUTDOWN_TIMEOUT'] as number)
-				: 1000,
-		signals: ['SIGINT', 'SIGTERM', 'SIGHUP'],
-		beforeShutdown,
-		onSignal,
-		onShutdown,
-	};
+	if (getNodeEnv() !== 'development') {
+		const terminusOptions: TerminusOptions = {
+			timeout:
+				(env['SERVER_SHUTDOWN_TIMEOUT'] as number) >= 0 && (env['SERVER_SHUTDOWN_TIMEOUT'] as number) < Infinity
+					? (env['SERVER_SHUTDOWN_TIMEOUT'] as number)
+					: 1000,
+			signals: ['SIGINT', 'SIGTERM', 'SIGHUP'],
+			beforeShutdown,
+			onSignal,
+			onShutdown,
+		};
 
-	createTerminus(server, terminusOptions);
+		createTerminus(server, terminusOptions);
+	}
 
 	return server;
 
