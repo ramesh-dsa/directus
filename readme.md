@@ -10,6 +10,9 @@ I started with a single goal: take Directus (an open-source backend + admin dash
 
 ---
 
+<img width="1866" height="1013" alt="image" src="https://github.com/user-attachments/assets/98911a6b-8d80-495c-8a8c-d9e2e530ae66" />
+
+
 ## Chapter 1: Setup and The First Crisis
 
 ### Setting Up the Monorepo
