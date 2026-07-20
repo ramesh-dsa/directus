@@ -24,6 +24,9 @@ Directus isn't a simple npm package — it's a **monorepo**. One repository cont
 
 I cloned the repo and installed dependencies using pnpm (faster than npm, better dependency management).
 
+<img width="1843" height="979" alt="image" src="https://github.com/user-attachments/assets/127be684-1e86-404f-bc8b-886c7bb1931c" />
+
+
 ```bash
 git clone https://github.com/ramesh-dsa/directus.git
 cd directus
@@ -68,6 +71,8 @@ Once the server was stable, I was ready to build. The goal was to add three majo
 ### Feature 1: Regex Filter Operator
 
 **The Idea:** Let API users search using regex patterns, not just exact matches or LIKE queries.
+
+<img width="1771" height="928" alt="image" src="https://github.com/user-attachments/assets/f12f698b-7977-4be7-a859-2e898c43c554" />
 
 Instead of just:
 ```
@@ -121,6 +126,9 @@ I created 6 helper files, one for each database type. Each file implements the o
 GET /items/students?meta=pagination&page=2&limit=10
 ```
 
+<img width="1834" height="1006" alt="image" src="https://github.com/user-attachments/assets/972f47d1-d52b-491a-85e6-cdcc8e3f7c91" />
+
+
 Returns:
 ```json
 {
@@ -149,6 +157,11 @@ No more guessing or extra database queries.
 ## Chapter 3: Building Real Data and a Dashboard
 
 With features built, I needed to set up real data and create a visual dashboard.
+
+
+<img width="1912" height="959" alt="image" src="https://github.com/user-attachments/assets/38502b14-9d7c-4b0e-bbbe-72825b1df481" />
+
+
 
 ### The Collections
 
@@ -195,6 +208,9 @@ Each section has a clear header label, and the larger panel sizes make the dashb
 
 The biggest pain point was manual work. Every time someone created a new collection, I had to manually add panels to the dashboard. This was repetitive and didn't scale.
 
+<img width="1833" height="875" alt="image" src="https://github.com/user-attachments/assets/d4f1326e-1d42-49fa-89d9-d36cb14826bf" />
+
+
 ### Building the Auto-Dashboard Hook
 
 I created a **Directus Hook Extension** that listens for new collections and automatically generates dashboard panels for them.
@@ -239,6 +255,10 @@ Over this journey, I made 7 commits, each representing a completed feature:
 | 299d2eb | Fixed server crashes and field type issues | 5 hours ago |
 | 869d650 | Created the 14-panel dashboard | 2 hours ago |
 | 0fc4dd1 | Built auto-dashboard hook extension | 1 hour ago |
+
+
+<img width="1860" height="935" alt="image" src="https://github.com/user-attachments/assets/7b3d1589-f87d-4f57-9755-715b3c69d77a" />
+
 
 Each commit represents **one complete, tested feature**. No work-in-progress commits, no "WIP" or "fix stuff" messages. Each tells a clear story of what was accomplished.
 
